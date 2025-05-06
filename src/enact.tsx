@@ -9,9 +9,11 @@ import {
   resource,
   spawn,
   Stream,
+  withResolvers,
+  WithResolvers,
 } from "effection";
-import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import type { ReactElement, ReactNode } from "react";
+import { cloneElement, useEffect, useState } from "react";
 
 export interface EnactComponent<T> {
   (props: T): Operation<ReactNode | void>;
@@ -27,6 +29,31 @@ export function* render(node: ReactNode): Operation<void> {
 }
 
 export const $ = render;
+
+function HOC({
+  children,
+  resolver,
+}: {
+  children: ReactElement;
+  resolver: WithResolvers<any>;
+}) {
+  const [ref, set_ref] = useState(null);
+
+  useEffect(() => {
+    if (ref) resolver.resolve(ref);
+  }, [ref]);
+
+  // @ts-expect-error
+  return cloneElement(children, { ref: set_ref });
+}
+
+export function* ref<T extends keyof HTMLElementTagNameMap>(
+  current: ReactElement
+) {
+  const resolver = withResolvers<HTMLElementTagNameMap[T]>();
+  yield* render(<HOC resolver={resolver}>{current}</HOC>);
+  return resolver.operation;
+}
 
 const RenderContext = createContext<(node: ReactNode) => void>("enact.render");
 
