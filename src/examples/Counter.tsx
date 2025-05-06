@@ -1,5 +1,5 @@
 import { sleep } from "effection";
-import { ref, enact, useValue } from "../enact.tsx";
+import { $, useRef, enact, useValue } from "../enact.tsx";
 
 /**
  * ```ts
@@ -17,8 +17,10 @@ import { ref, enact, useValue } from "../enact.tsx";
 export const Counter = enact(function* () {
   let count = useValue(0);
 
-  const node = yield* ref(
-    <button type="button" onClick={() => count.set(count.current + 1)}>
+  let node = useRef<HTMLButtonElement>()
+
+  yield* $(
+    <button ref={node} type="button" onClick={() => count.set(count.current + 1)}>
       count is <count.react />
     </button>
   );

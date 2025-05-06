@@ -55,6 +55,26 @@ export function* ref<T extends keyof HTMLElementTagNameMap>(
   return resolver.operation;
 }
 
+export function useRef<T extends HTMLElement>() {
+  const ref = {current: null};
+  const resolver = withResolvers<T>();
+
+  const fn = resource<T>(function*(provide) {
+    yield* provide(yield* resolver.operation)
+  })
+
+  return {
+    [Symbol.iterator]: fn[Symbol.iterator],
+    get current() {
+      return ref.current;
+    },
+    set current(node: any) {
+      ref.current = node;
+      resolver.resolve(node)
+    }
+  }
+}
+
 const RenderContext = createContext<(node: ReactNode) => void>("enact.render");
 
 export function enact<T>(component: EnactComponent<T>): ReactComponent<T> {
